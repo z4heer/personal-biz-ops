@@ -1,3 +1,49 @@
+### 1. Equity Swing Portfolio Actions
+
+* **ZYDUSLIFE (Weekly Invalidation Decision — Priority #1):**
+* **Monitor Friday Close:** Observe where the stock closes the week relative to the **₹1,215** hard invalidation level.
+* **Rule:** If the stock fails to reclaim and close above ₹1,215 by 3:15–3:25 PM, execute an orderly exit on the 1 Qty holding (bought @ ₹1,238.30) to protect capital.
+* **Restriction:** Maintain strict buy freeze; do not average down.
+
+
+* **LODHA (Order Verification):**
+* Confirm that your **GTT Limit Sell order** is active in Zerodha Kite: Trigger `₹1,199.90`, Limit Sell `₹1,199.80` for **all 2 shares** (targeting a clean +7.64% net exit).
+
+
+* **MOTHERSON (Single-Batch Target Prep):**
+* Keep the sell target pinned at **₹171.20** (+7.0% from ₹159.96 cost).
+* Ensure the exit order is placed as a single batch for all 6 shares to limit Zerodha DP friction to ₹15.34 (avoiding multiple daily charges).
+
+
+* **HINDZINC (Price Alert Monitoring):**
+* Maintain the price alert at **₹546.00**.
+* Take no action at current levels (~₹571); consider adding 4 shares only if an orderly pullback retests the ₹540–₹548 support base.
+
+
+
+---
+
+### 2. Intraday & F&O Protocol Discipline
+
+* **Maintain Week 1 Trading Freeze:**
+* Zero live real-money option orders.
+* Focus remains on the historical system audit and rule freezing (analyzing past F&O loss drivers and friction leaks).
+
+
+* **Time Filter Enforcement (11:30 AM – 1:30 PM IST):**
+* Keep the terminal in observation-only mode before 11:30 AM.
+* If tracking simulated setups or running multi-screen checks, restrict screen time strictly to the 11:30 AM – 1:30 PM window.
+
+
+
+---
+
+### 3. End-of-Day Weekend Review Prep
+
+* **EOD Log (Post 3:30 PM):**
+* Log final Friday closing prices for all cash swing positions.
+* Record whether any setups triggered an invalidation exit (ZYDUSLIFE) or maintained their weekly structure.
+
 ### End of Day Debrief: November 5, 2026
 
 Market session closed. Today served as a textbook execution of **capital preservation and operational discipline** during Week 1 of your audit protocol.
