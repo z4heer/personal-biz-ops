@@ -1,144 +1,61 @@
 ```python
-# Analyze SENSEX option spread math from screenshots (Lot size = 20)
-lot_size = 20
+# Verify levels and spreads from Screenshot 2026-11-17 125136.png
+# Left chart: SENSEX NOV 83000 CE (15m)
+ce83000_buy = 717.45
+ce83000_sell = 715.75
+ce83000_spread = round(ce83000_buy - ce83000_sell, 2)
+ce83000_ltp = 716.55
+ce83000_ema9 = 690.92
+ce83000_vwap = 639.30
+ce83000_ema26 = 588.30
 
-# Bull Call Spread (26 Nov 2026 expiry - 9 DTE, IVP 52%)
-# ATM 82800 CE = 844.90, OTM 83000 CE = 730.20 (or 83100 CE = 678.00)
-bcs_debit_200 = (844.90 - 730.20) * lot_size
-bcs_profit_200 = (200 - (844.90 - 730.20)) * lot_size
+# Right chart: SENSEX NOV 82800 CE (15m)
+ce82800_ltp = 823.40
+ce82800_ema9 = 790.65
+ce82800_vwap = 764.24
+ce82800_ema26 = 673.76
 
-bcs_debit_300 = (844.90 - 678.00) * lot_size
-bcs_profit_300 = (300 - (844.90 - 678.00)) * lot_size
-
-# Bull Put Spread (26 Nov 2026 expiry - 9 DTE, IVP 52%)
-# Sell 82800 PE = 674.10, Buy 82500 PE = 558.55
-bps_credit_300 = (674.10 - 558.55) * lot_size
-bps_loss_300 = (300 - (674.10 - 558.55)) * lot_size
-
-# Intraday Long 82900 CE (19 Nov expiry - from Screenshot 3: Buy 391.50, Sell 390.45, Spread 1.05)
-intraday_cost = 391.50 * lot_size
-intraday_40sl = intraday_cost * 0.40
-
-print(f"BCS 82800/83000 (200w): Debit ₹{bcs_debit_200:,.2f}, Max Profit ₹{bcs_profit_200:,.2f}, R:R 1:{bcs_profit_200/bcs_debit_200:.2f}")
-print(f"BCS 82800/83100 (300w): Debit ₹{bcs_debit_300:,.2f}, Max Profit ₹{bcs_profit_300:,.2f}, R:R 1:{bcs_profit_300/bcs_debit_300:.2f}")
-print(f"BPS 82800/82500 (300w): Credit ₹{bps_credit_300:,.2f}, Max Loss ₹{bps_loss_300:,.2f}, R:R 1:{bps_credit_300/bps_loss_300:.2f}")
-print(f"Intraday 82900 CE (19 Nov): Cost ₹{intraday_cost:,.2f}, 40% SL ₹{intraday_40sl:,.2f}")
+print(f"83000 CE: Buy={ce83000_buy}, Sell={ce83000_sell}, Spread=₹{ce83000_spread}, Dist to 9EMA={ce83000_ltp - ce83000_ema9:.2f}, Dist to VWAP={ce83000_ltp - ce83000_vwap:.2f}")
+print(f"82800 CE: LTP={ce82800_ltp}, Dist to 9EMA={ce82800_ltp - ce82800_ema9:.2f}, Dist to VWAP={ce82800_ltp - ce82800_vwap:.2f}")
 
 
 ```
 
 ```text
-BCS 82800/83000 (200w): Debit ₹2,294.00, Max Profit ₹1,706.00, R:R 1:0.74
-BCS 82800/83100 (300w): Debit ₹3,338.00, Max Profit ₹2,662.00, R:R 1:0.80
-BPS 82800/82500 (300w): Credit ₹2,311.00, Max Loss ₹3,689.00, R:R 1:0.63
-Intraday 82900 CE (19 Nov): Cost ₹7,830.00, 40% SL ₹3,132.00
+83000 CE: Buy=717.45, Sell=715.75, Spread=₹1.7, Dist to 9EMA=25.63, Dist to VWAP=77.25
+82800 CE: LTP=823.4, Dist to 9EMA=32.75, Dist to VWAP=59.16
 
 
 ```
 
-```python
-# Check OTM Bull Call Spread (83000 CE / 83200 CE) for 26 Nov expiry to get >= 1:1.5 R:R
-lot_size = 20
-# 83000 CE = 730.20, 83200 CE = 630.00 -> width = 200
-debit_otm = (730.20 - 630.00) * lot_size
-profit_otm = (200 - (730.20 - 630.00)) * lot_size
+That is a disciplined, textbook decision—and the new screenshot (`Screenshot 2026-11-17 125136.png`) reveals **two critical confirmations** why waiting is the right call:
 
-# Check 82900 CE (787.00) / 83200 CE (630.00) -> width = 300
-debit_829_832 = (787.00 - 630.00) * lot_size
-profit_829_832 = (300 - (787.00 - 630.00)) * lot_size
+---
 
-print(f"OTM BCS 83000/83200 (200w): Debit ₹{debit_otm:,.2f}, Max Profit ₹{profit_otm:,.2f}, R:R 1:{profit_otm/debit_otm:.2f}")
-print(f"BCS 82900/83200 (300w): Debit ₹{debit_829_832:,.2f}, Max Profit ₹{profit_829_832:,.2f}, R:R 1:{profit_829_832/debit_829_832:.2f}")
+### 1. Bid-Ask Spread Gate Check (`SENSEX NOV 83000 CE`)
 
+* **Live Bid / Ask:** `SELL 715.75` / `BUY 717.45` $\rightarrow$ **Bid-Ask Gap = `₹1.70**` (more than **3×** your `<= ₹0.50` index liquidity rule).
+* Entering right now at market/ask immediately costs you **₹34/lot** (`1.70 × 20`) in slippage on just one leg before the trade even moves.
 
-```
+---
 
-```text
-OTM BCS 83000/83200 (200w): Debit ₹2,004.00, Max Profit ₹1,996.00, R:R 1:1.00
-BCS 82900/83200 (300w): Debit ₹3,140.00, Max Profit ₹2,860.00, R:R 1:0.91
+### 2. VWAP Pullback Target Levels (15M Option Charts)
 
+Both contracts are actively pulling back from their session highs (`795` on `83000 CE` and `899` on `82800 CE`) on declining red volume, with **37 minutes remaining** in your **11:30 AM – 1:30 PM IST** execution window (`12:53 PM` now):
 
-```
+| Contract | Current LTP | 15M 9 EMA (First Support) | 15M Session VWAP (Target Entry Zone) | 15M 26 EMA (Hard Invalidation) |
+| --- | --- | --- | --- | --- |
+| **`SENSEX NOV 83000 CE`** *(Left)* | `716.55` | `690.92` (`-25.63 pts`) | **`639.30` – `650.00**` (`-77.25 pts`) | `588.30` |
+| **`SENSEX NOV 82800 CE`** *(Right)* | `823.40` | `790.65` (`-32.75 pts`) | **`764.24` – `775.00**` (`-59.16 pts`) | `673.76` |
 
-```python
-import csv
+---
 
-# Read existing CSV to append SENSEX_Value column cleanly
-with open('SwingPilot_Beginner_Trade_Pilot_SHRIRAMFIN.csv', 'r', encoding='utf-8') as f:
-    rows = list(csv.reader(f))
+### Execution Plan Until `1:30 PM IST`
 
-sensex_new_values = {
-    'Field_Name': 'SENSEX_26NOV_Value',
-    'Underlying_Symbol': 'SENSEX',
-    'Strategy_Type': 'Bull Call Spread',
-    'Trade_Direction': 'Bullish',
-    'Market_Regime': 'Impulse BOS',
-    'Completed_15M_Trigger_Closed': 'YES',
-    'Execution_Time_IST': '12:42 PM',
-    'Upcoming_Earnings_or_Major_Event': 'NO',
-    'Expiry_Date': '2026-11-26',
-    'Calendar_DTE': '9',
-    'Numerical_IVP_Percent': '52',
-    'Lot_Size': '20',
-    'Number_of_Lots': '1',
-    'Primary_Leg_Strike': '83000',
-    'Primary_Leg_Type': 'CE',
-    'Primary_Leg_Price': '730.20',
-    'Primary_Leg_Bid_Ask_Spread': '0.50',
-    'Hedge_Leg_Strike': '83200',
-    'Hedge_Leg_Type': 'CE',
-    'Hedge_Leg_Price': '630.00',
-    'Hedge_Leg_Bid_Ask_Spread': '0.50',
-    'Broker_SPAN_Exposure_Margin_INR': '0',
-}
-
-updated_rows = []
-for row in rows:
-    field = row[0]
-    val = sensex_new_values.get(field, '')
-    # Insert SENSEX_26NOV_Value right before Instructions_and_Validation_Rules (last col)
-    new_row = row[:-1] + [val, row[-1]]
-    updated_rows.append(new_row)
-
-out_csv = 'SwingPilot_Beginner_Trade_Pilot_Updated.csv'
-with open(out_csv, 'w', newline='', encoding='utf-8') as f:
-    writer = csv.writer(f)
-    writer.writerows(updated_rows)
-
-with open(out_csv, 'r', encoding='utf-8') as f:
-    print(f.read())
-
-
-```
-
-```text
-Field_Name,RELIANCE_Value,SENSEX_Value,SHRIRAMFIN_Value,SENSEX_26NOV_Value,Instructions_and_Validation_Rules
-Underlying_Symbol,RELIANCE,SENSEX,SHRIRAMFIN,SENSEX,Stock or Index symbol [cite: 4]
-Strategy_Type,Bull Call Spread,Bear Put Spread,Bull Call Spread,Bull Call Spread,Bull Call Spread / Bear Put Spread / Long Call / Long Put / Credit Spread [cite: 4]
-Trade_Direction,Bullish,Bearish,Bullish,Bullish,Bullish / Bearish [cite: 4]
-Market_Regime,Trend Pullback,Trend Pullback,Trend Pullback,Impulse BOS,Regime 1 (Impulse BOS) / Regime 2 (Trend Pullback) / Regime 3 (Range Sweep) [cite: 3]
-Completed_15M_Trigger_Closed,YES,YES,YES,YES,YES/NO: Has a 15M candle closed confirming the setup in trade direction? [cite: 3]
-Execution_Time_IST,11:45 AM,12:15 PM,12:22 PM,12:42 PM,Must be within entry window: 11:30 AM to 1:30 PM IST (Gate 2) [cite: 3]
-Upcoming_Earnings_or_Major_Event,NO,NO,NO,NO,YES/NO: Any earnings or major macro event within 5 calendar days? [cite: 3]
-Expiry_Date,2026-11-23,2026-11-26,2026-11-23,2026-11-26,Contract expiry date (YYYY-MM-DD) [cite: 4]
-Calendar_DTE,10,13,6,9,"Calendar days to expiry: Spreads require 7 to 20 DTE [cite: 3,4]"
-Numerical_IVP_Percent,42,48,57,52,Implied Volatility Percentile: 35% to 55% required for Debit Spreads [cite: 3]
-Lot_Size,500,20,1500,20,"Contract lot size (e.g. RELIANCE=500,SENSEX=20) [cite: 4,11]"
-Number_of_Lots,1,1,1,1,Default is strictly 1 lot during pilot [cite: 4]
-Primary_Leg_Strike,1340,81500,1000,83000,Bought Strike (for Debit Spread) or Sold Strike (for Credit Spread) [cite: 4]
-Primary_Leg_Type,CE,PE,CE,CE,CE or PE [cite: 4]
-Primary_Leg_Price,24.5,420,14.60,730.20,Executable premium in ₹/unit (Best Ask if buying) [cite: 4]
-Primary_Leg_Bid_Ask_Spread,0.25,0.4,0.10,0.50,"Bid-Ask gap in ₹ (Must be <= ₹1.00 for stock,<= ₹0.50 for index) [cite: 3]"
-Hedge_Leg_Strike,1370,80900,1020,83200,Sold Strike (for Debit Spread) or Bought Strike (for Credit Spread) [cite: 4]
-Hedge_Leg_Type,CE,PE,CE,CE,CE or PE [cite: 4]
-Hedge_Leg_Price,12.5,155,7.60,630.00,Executable premium in ₹/unit (Best Bid if selling) [cite: 4]
-Hedge_Leg_Bid_Ask_Spread,0.2,0.3,0.25,0.50,"Bid-Ask gap in ₹ (Must be <= ₹1.00 for stock,<= ₹0.50 for index) [cite: 3]"
-Broker_SPAN_Exposure_Margin_INR,0,0,0,0,Required for Credit Spreads only; enter 0 for Debit Spreads [cite: 4]
-
-
-
-```
-
+1. **Alert / Watch Zone:** Watch for `83000 CE` to dip into the **`640–660`** zone (near VWAP `639.30`) or `82800 CE` into **`764–780`** (near VWAP `764.24`) as SENSEX spot tests its 15M VWAP (`82,622`).
+2. **Trigger Confirmation:** Wait for a **15M green candle close** bouncing off VWAP (do not catch a falling red candle if price slices cleanly below `639.30` / `764.24`).
+3. **Order Type & Hard Cutoff:** Use **Limit Orders** only (never Market orders with a `₹1.70` spread). If price does not reach VWAP and print a bullish 15M close by **1:30 PM IST**, stand down for the day per Gate 2.
+---
 **Verdict: SENSEX passes ALL SwingPilot Gate Checks (`9 DTE`, `52% IVP`, `12:42 PM IST`, `Lot Size = 20`) under Regime 1 (Impulse BOS).** However, you must choose between two distinct structures depending on your R:R vs. budget preference—and avoid the 19 Nov weekly 82900 CE due to its `₹1.05` bid-ask spread (`> ₹0.50` index limit).
 
 ---
