@@ -1,7 +1,12 @@
-Badhai ho! Fyers App ID (API Key) aur Secret Key milne ke baad ab hum **OpenAlgo + Fyers** ko local environment mein connect karenge aur **Analyze Mode** (Paper Trading) par live tick data verify karenge.
+Yes, we are completely set for today! Your **Python $\leftrightarrow$ OpenAlgo $\leftrightarrow$ Fyers** pipeline is live, verified, and running in **Analyze Mode**.
 
-*(Security Note: Apna `App ID` aur `Secret Key` chat mein paste mat kijiyega—seedha apne local `.env` file mein dalega).*
+### Quick Checklist for Tomorrow Morning (Friday, Nov 20)
 
+1. **Before 10:30 AM IST:** Start OpenAlgo (`python app.py`), log in via **Login with Fyers** at `[http://127.0.0.1:5000](http://127.0.0.1:5000)`, and verify the purple **Analyze** badge is active.
+2. **Confirm WSL Timezone & Option Symbol:** Double-check `date` shows IST and grab your exact `BFO`/`NFO` option contract symbol via `c.search(...)`.
+3. **Launch & Observe:** Run `python v3_momentum_engine.py` (at 10:30 AM for 4-candle base lock + 11:30 AM–1:30 PM execution) or `python strategy_engine.py` (at 11:30 AM).
+
+See you tomorrow during the trading session—have a great evening!
 ---
 
 ### Step 1: `openalgo/.env` File Update Karein
