@@ -1,3 +1,45 @@
+## Review
+### Architect Sign-Off Review: `equity_intraday_engine.py` & `equity_screener.py` (V1.0 on `dev`)
+
+Antigravity delivered a clean, modular implementation that satisfies every specification in your blueprint:
+
+* **Zero Regression on `main` / V3.4 Options:** All 6 modules (`config.py`, `broker_adapter.py`, `equity_screener.py`, `equity_intraday_engine.py`, `v3_momentum_engine.py`, `strike_screener.py`) compile cleanly together, and `place_market_order()` preserves `strategy="V3_Momentum_Engine"` as default while tagging cash trades under `"V1_Equity_Intraday_Engine"`.
+* **End-to-End Parity Verified:** Both `BULLISH` (`LONG` TCS) and `BEARISH` (`SHORT` TCS) simulations executed through `1:1.5R` Breakeven, `1:2.5R` `+1R` Profit Lock, 2-candle swing trailing, atomic 12-column CSV logging, and startup daily trade-count recovery (`2/2 trades executed today. Halting.`).
+
+---
+
+### Two Quick Live-Market Edge Cases to Verify Before Running Tomorrow
+
+Before committing `dev` and running live in OpenAlgo `Analyze Mode`, inspect these two subtle live-payload details in `equity_screener.py` and `equity_intraday_engine.py` (or ask Antigravity to verify them in 30 seconds):
+
+1. **SENSEX Index Symbol & Exchange Format in OpenAlgo (`BSE` vs `BSE_INDEX`):**
+* In OpenAlgo + Fyers, the Sensex index spot symbol is often registered as `symbol="SENSEX"`, `exchange="BSE_INDEX"` (or `"SENSEX-INDEX"` on `"BSE"`), whereas `"SENSEX"` on `"BSE"` can sometimes return empty or fail depending on the `symtoken` table.
+* **Quick Check:** Have Antigravity check `SELECT symbol, exchange FROM symtoken WHERE name = 'SENSEX' AND instrumenttype = 'INDEX'` inside `openalgo.db` so `equity_screener.py` uses the exact `symbol` and `exchange` string stored in your local OpenAlgo database!
+
+
+2. **Pre-Market / Mid-Morning Timing Gate (`11:25 AM` Screening):**
+* In live mode, `select_trending_sensex_stocks()` relies on intraday `% change` and `RVOL` (`pct_change >= ±0.80%`). Running it right at **11:25 AM** (at the end of the `10:30–11:30 AM` Freeze Hour) gives 2+ hours of real price discovery and volume accumulation before the `11:30 AM – 01:30 PM` breakout window opens.
+
+
+
+---
+
+### Git Commit & Push on `dev` (After Removing Test CSV Rows)
+
+Make sure you delete the two synthetic test rows in `equity_paper_trades_log.csv` (or remove the file so `init_csv()` creates a fresh header tomorrow), then commit and push your `dev` branch:
+
+```bash
+cd ~/trading-projects/option-trailing-algo
+rm -f equity_paper_trades_log.csv
+git status
+git add config.py broker_adapter.py equity_screener.py equity_intraday_engine.py
+git commit -m "Feat(dev): V1.0 NSE Cash Equity Intraday Engine & Sensex-30 Regime Screener"
+git push
+
+```
+
+Would you like a 1-line check on the exact `SENSEX` index symbol in `openalgo.db` right now so tomorrow's live run has zero symbol lookup surprises?
+---
 Ran check git branch and status
 Ran list directory files
 Analyzed V3_2_JULES_AUDIT_REPORT.md:L1-150
