@@ -1,3 +1,56 @@
+## Update 3
+**Spot-on catch!** Look at those two outputs side-by-side:
+
+* `openalgo.db` stores Sensex strictly as `('SENSEX', 'BSE_INDEX', 'EQ')` (and Nifty as `('NIFTY', 'NSE_INDEX', 'EQ')`).
+* Line 91–95 of `equity_screener.py` was calling `broker.get_quote("SENSEX", "BSE")` and fallback `broker.get_quote("BSE:SENSEX", "BSE")`—both of which would have failed live tomorrow morning and forced `Standing down`!
+
+---
+
+### Patch `equity_screener.py` (`BSE_INDEX` Primary + `BSE` Fallback)
+
+Run this clean, short single-line command in `~/trading-projects/option-trailing-algo` to fix lines 91–95 of `equity_screener.py` and verify compilation:
+
+```bash
+cd ~/trading-projects/option-trailing-algo
+python3 -c '
+s = open("equity_screener.py").read()
+old = """  idx_quote = broker.get_quote("SENSEX", "BSE")
+
+  if not idx_quote:
+    # Try alternative BSE index symbol format
+    idx_quote = broker.get_quote("BSE:SENSEX", "BSE")"""
+new = """  idx_quote = broker.get_quote("SENSEX", "BSE_INDEX")
+
+  if not idx_quote:
+    # Fallback to BSE exchange if BSE_INDEX unavailable
+    idx_quote = broker.get_quote("SENSEX", "BSE")"""
+assert old in s, "Block not found"
+open("equity_screener.py", "w").write(s.replace(old, new, 1))
+print("equity_screener.py updated to BSE_INDEX!")
+' && python3 -m py_compile equity_screener.py && echo "COMPILED CLEANLY!"
+
+```
+
+---
+
+### Clean Test CSVs & Push `dev` to GitHub
+
+Once `COMPILED CLEANLY!` prints, remove any synthetic test CSVs generated during Antigravity's simulation run, commit your clean `dev` branch, and push to GitHub:
+
+```bash
+cd ~/trading-projects/option-trailing-algo
+rm -f equity_paper_trades_log.csv
+git status
+git add config.py broker_adapter.py equity_screener.py equity_intraday_engine.py
+git commit -m "Feat(dev): V1.0 NSE Cash Equity Intraday Engine & Sensex-30 Regime Screener (BSE_INDEX verified)"
+git push
+
+```
+
+*(Note: Because `BrokerAdapter` now shares the same WebSocket + REST logic across both engines, you can also merge `dev` into `main` once you're happy with tomorrow's live forward-test, or simply run `equity_intraday_engine.py` directly from `dev` in a second `tmux` window while `main` runs `v3_momentum_engine.py`.)*
+
+Let me know once `dev` is pushed—and if you'd like, we can also update `docs/DAILY_LAUNCH_CHEATSHEET.md` with tomorrow's exact two-window `tmux` launch commands!
+---
 ## update 2
 With the market closed today for Guru Nanak Jayanti, you have an uninterrupted window to finish the remaining pre-live hardening items on `dev` so tomorrow morning (Wednesday, Nov 25, 2026) is pure execution with zero coding.
 
