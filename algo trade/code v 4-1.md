@@ -1,3 +1,56 @@
+## update 2
+With the market closed today for Guru Nanak Jayanti, you have an uninterrupted window to finish the remaining pre-live hardening items on `dev` so tomorrow morning (Wednesday, Nov 25, 2026) is pure execution with zero coding.
+
+### Today's Remaining Checklist (Holiday Pre-Flight)
+
+#### 1. Fix the `SENSEX` Index Exchange Code in `equity_screener.py` (Critical Live Bug Catch)
+
+* **Why:** In OpenAlgo's Fyers plugin and symbol specification, index spot quotes require exchange **`BSE_INDEX`** (and **`NSE_INDEX`** for Nifty) rather than `"BSE"`. If `equity_screener.py` queries `symbol="SENSEX", exchange="BSE"`, Fyers will fail to find the index quote tomorrow morning.
+* **Action:** Have Antigravity verify `equity_screener.py` uses `symbol="SENSEX", exchange="BSE_INDEX"` (with `symbol="NIFTY", exchange="NSE_INDEX"` as backup), and double-check against your local `openalgo.db`:
+```bash
+sqlite3 ~/trading-projects/openalgo/db/openalgo.db "SELECT symbol, exchange, instrumenttype FROM symtoken WHERE symbol IN ('SENSEX', 'NIFTY');"
+
+```
+
+
+
+#### 2. Verify `ETERNAL` vs `ZOMATO` & All 30 Sensex Symbols in `openalgo.db`
+
+* **Why:** Corporate ticker transitions (such as `ZOMATO` $\rightarrow$ `ETERNAL`) or `M&M` ampersand encoding can differ in broker symbol masters.
+* **Action:** Run this 1-line SQLite check against `openalgo.db` to confirm every single ticker in `config.SENSEX_30_SYMBOLS` resolves cleanly on `NSE`:
+```bash
+cd ~/trading-projects/option-trailing-algo && source venv/bin/activate
+python3 -c 'import sqlite3, config; conn=sqlite3.connect("/home/zahsay/trading-projects/openalgo/db/openalgo.db"); found={r[0] for r in conn.execute("SELECT symbol FROM symtoken WHERE exchange=\"NSE\"")}; missing=[s for s in config.SENSEX_30_SYMBOLS if s not in found]; print("Missing NSE symbols:", missing)'
+
+```
+
+
+
+#### 3. Clean Simulation Artifacts & Commit `dev` to GitHub
+
+* **Action:** Remove the two synthetic simulation test rows from `equity_paper_trades_log.csv` (and ensure `*.csv` stays ignored in `.gitignore`), then commit and push `dev`:
+```bash
+cd ~/trading-projects/option-trailing-algo
+rm -f equity_paper_trades_log.csv
+git add config.py broker_adapter.py equity_screener.py equity_intraday_engine.py
+git commit -m "Feat(dev): V1.0 NSE Cash Equity Intraday Engine & Sensex-30 Regime Screener"
+git push
+
+```
+
+
+
+#### 4. Update `docs/DAILY_LAUNCH_CHEATSHEET.md` for Dual-Engine Operation
+
+* **Action:** Add a short launch section to `docs/DAILY_LAUNCH_CHEATSHEET.md` covering tomorrow's exact two-window workflow (`tmux` session `algo_sess0`):
+* **09:05 AM:** Start OpenAlgo, log in to Fyers, confirm **Analyze Mode (Purple Pill)** is ON.
+* **10:15 AM (Options V3.4 on `main`):** Run `python3 strike_screener.py`, update `CANDIDATE_STRIKES`, and launch `python3 v3_momentum_engine.py`.
+* **11:25 AM (Equity V1.0 on `dev` — or after merging `dev` $\rightarrow$ `main`):** Run `python3 equity_intraday_engine.py` in a second `tmux` window (`Ctrl+B` then `C`) so it screens Sensex 30 Gainers/Losers at the end of the Freeze Hour and hunts `11:30 AM – 01:30 PM` breakouts alongside your options engine.
+
+
+
+Run items **1** and **2** right now and paste the output—if any symbol in `SENSEX_30_SYMBOLS` or `BSE_INDEX` needs tweaking, we'll patch it cleanly before you push `dev`!
+---
 ## Review
 ### Architect Sign-Off Review: `equity_intraday_engine.py` & `equity_screener.py` (V1.0 on `dev`)
 
