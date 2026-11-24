@@ -1,3 +1,98 @@
+## Update 4
+Splitting them into two dedicated runbooks keeps your `main` (Options V3.4) and `dev` (Cash Equity V1.0) workflows completely uncluttered during live market hours.
+
+Create these two files inside your `docs/` folder in VS Code (`~/trading-projects/option-trailing-algo/docs/`):
+
+---
+
+### 1. `docs/OPTIONS_DAILY_LAUNCH_CHEATSHEET.md` (Branch: `main` — V3.4 Options Engine)
+
+```markdown
+# Daily Launch Cheatsheet — Options Momentum Engine (V3.4)
+
+- **Git Branch:** `main`
+- **Engine Script:** `v3_momentum_engine.py` + `strike_screener.py`
+- **Trade Log:** `v3_paper_trades_log.csv`
+- **Capital & Risk Budget:** `₹4,000 – ₹5,000` per lot (`1` lot max) | `₹500` max risk per trade | `-₹800` daily kill-switch | `3` trades/day max
+
+---
+
+## Pre-Market & Morning Checklist (IST)
+
+| Time (IST) | Step | Command / Action | Verification Check |
+| :--- | :--- | :--- | :--- |
+| **09:05 AM** | **1. Start OpenAlgo & Broker Login** | Start OpenAlgo server (`http://127.0.0.1:5000`), log in to **Fyers**, and verify **Analyze Mode (Purple Pill)** is ON. | Confirm WebSocket proxy (`ws://127.0.0.1:8765`) is active and API key matches `config_local.py`. |
+| **10:15 AM** | **2. Screen OTM Strikes** | `cd ~/trading-projects/option-trailing-algo && source venv/bin/activate`<br>`git checkout main`<br>`python3 strike_screener.py` | Enter `SENSEX` or `NIFTY`, `PE` or `CE`, and current Spot. Note the `SWEET SPOT` strikes (`₹200–₹250` SENSEX / `₹61.55–₹76.90` NIFTY). On `0-DTE`, choose `Y` for Next-Week Expiry. |
+| **10:20 AM** | **3. Update Watchlist** | Paste the recommended `CANDIDATE_STRIKES = [...]` list into `config.py` and save (`Ctrl+S`). | Ordered from closest OTM to deeper OTM for automatic premium rotation. |
+| **10:25 AM** | **4. Launch Engine in `tmux`** | `tmux new -s algo_sess0`<br>`cd ~/trading-projects/option-trailing-algo && source venv/bin/activate`<br>`python3 v3_momentum_engine.py` | Confirm `[BROKER] OpenAlgo WebSocket connected` and `[LIVE TICK]` heartbeat updates cleanly. Detach safely with `Ctrl+B` then `D`. |
+| **10:30 – 11:30 AM** | **5. Freeze-Hour Observation** | **Hands Off.** Engine discards truncated startup candle, records clean 3m candles, and locks `Base High` / `Base Low`. | Auto-rotates OTM strikes if LTP moves outside `₹4,000 – ₹5,000/lot` (with 15s cooldown). |
+| **11:30 – 01:30 PM** | **6. Active Breakout Window** | **Hands Off.** Enters `1` lot on confirmed 3m close `> Base High` with valid depth, spread `<= ₹1.00`, and `<= 5%` chase guard. | Automatically manages `1.5R` Cost-Adjusted BE, `2.5R` `+1R` Profit Lock, `+50%` 2-candle trail, `9 EMA` exit, and 1-candle Climax Wick. |
+| **01:30 PM** | **7. Entry Cutoff** | If flat at `01:30 PM`, engine exits automatically (`[WINDOW CLOSED]`). | If in a trade, continues managing until trailing exit or `03:15 PM` EOD square-off. |
+| **03:20 PM** | **8. Post-Market Audit** | `cat v3_paper_trades_log.csv` | Verify closed trades, net P&L, and confirm zero open positions in OpenAlgo UI. |
+
+---
+
+## Emergency `tmux` & Kill-Switch Commands
+
+- **Reattach to running session:** `tmux attach -t algo_sess0`
+- **Manual graceful stop:** Inside `tmux`, press `Ctrl+C` (triggers clean WebSocket unsubscribe & disconnect).
+- **Crash recovery:** Restarting `python3 v3_momentum_engine.py` automatically reloads today's realized P&L and trade count from `v3_paper_trades_log.csv` so daily risk limits are never bypassed.
+
+```
+
+---
+
+### 2. `docs/EQUITY_DAILY_LAUNCH_CHEATSHEET.md` (Branch: `dev` — V1.0 Cash Equity Engine)
+
+```markdown
+# Daily Launch Cheatsheet — NSE Cash Equity Intraday Engine (V1.0)
+
+- **Git Branch:** `dev`
+- **Engine Script:** `equity_intraday_engine.py` + `equity_screener.py`
+- **Trade Log:** `equity_paper_trades_log.csv`
+- **Capital & Risk Budget:** `<= ₹25,000` MIS notional (`~₹5,000` margin at 5x) | `₹400` fixed risk per trade | `-₹800` daily kill-switch | `2` trades/day max
+
+---
+
+## Pre-Market & Morning Checklist (IST)
+
+| Time (IST) | Step | Command / Action | Verification Check |
+| :--- | :--- | :--- | :--- |
+| **09:05 AM** | **1. Verify OpenAlgo Gateway** | Ensure OpenAlgo (`http://127.0.0.1:5000`) is logged in to **Fyers** with **Analyze Mode (Purple Pill)** ON. | Shared gateway with Options Engine—no second OpenAlgo instance needed. |
+| **11:20 AM** | **2. Dry-Check Market Regime** | Open a new `tmux` window (`Ctrl+B` then `C` inside `algo_sess0`):<br>`cd ~/trading-projects/option-trailing-algo && source venv/bin/activate`<br>`git checkout dev`<br>`python3 equity_screener.py` | Checks `SENSEX` on `BSE_INDEX`:<br>• `>= +0.30%` -> **BULLISH (`LONG` Top 3 Gainers)**<br>• `<= -0.30%` -> **BEARISH (`SHORT` Top 3 Losers)**<br>• `-0.30% to +0.30%` -> **SIDEWAYS (Stand Down)** |
+| **11:25 AM** | **3. Launch Equity Engine** | `python3 equity_intraday_engine.py` | Hydrates `09:15 AM` intraday Session VWAP + `10:30–11:30 AM` Consolidation Box (`Base High` / `Base Low`) for top 3 Sensex-30 movers on `NSE`. |
+| **11:30 – 01:30 PM** | **4. Active Breakout Window** | **Hands Off.** Scans top 3 stocks in parallel (`1` concurrent position max). | **LONG:** `Close > Base High` & `Close > VWAP` + `1.5x` Vol Surge.<br>**SHORT:** `Close < Base Low` & `Close < VWAP` + `1.5x` Vol Surge.<br>Sizes `qty = int(400 / risk_per_share)` capped at `₹25,000` notional. |
+| **01:30 PM** | **5. Entry Cutoff** | If flat at `01:30 PM`, engine stands down automatically. | Active trades continue trailing through `1.5R` BE, `2.5R` `+1R` lock + 2-candle swing & `9 EMA` trail, or `4.0R` target. |
+| **03:10 PM** | **6. EOD MIS Auto Square-Off** | Engine automatically squares off any open `LONG` or `SHORT` position at `03:10 PM` (`15:10 IST`). | Executes 5–10 minutes ahead of broker MIS auto-square-off cutoff to avoid square-off penalties. |
+| **03:20 PM** | **7. Post-Market Audit** | `cat equity_paper_trades_log.csv` | Review direction (`LONG`/`SHORT`), fill price, planned `₹400` risk adherence, and net P&L. |
+
+---
+
+## Side-by-Side `tmux` Window Navigation (`algo_sess0`)
+
+- **Window `0` (`main`):** Options Momentum Engine (`v3_momentum_engine.py`)
+- **Window `1` (`dev`):** Cash Equity Engine (`equity_intraday_engine.py`)
+- **Switch between windows:** `Ctrl+B` then `0` (Options) or `Ctrl+B` then `1` (Equity)
+- **Detach safely (leave both running):** `Ctrl+B` then `D`
+
+```
+
+---
+
+### Save & Commit Both Cheatsheets on `dev`
+
+After saving both files in VS Code, commit and push them to `dev` (and remove the legacy single `docs/DAILY_LAUNCH_CHEATSHEET.md` if you no longer need it):
+
+```bash
+cd ~/trading-projects/option-trailing-algo
+git add docs/OPTIONS_DAILY_LAUNCH_CHEATSHEET.md docs/EQUITY_DAILY_LAUNCH_CHEATSHEET.md
+git commit -m "Docs: Split launch runbooks into separate Options V3.4 and Cash Equity V1.0 cheatsheets"
+git push
+
+```
+
+*(Note: When you switch back to `main` tomorrow morning for the Options engine, `main` stays untouched at V3.4 while `dev` holds your complete V1.0 Cash Equity suite and both cheatsheets.)*
+---
 ## Update 3
 **Spot-on catch!** Look at those two outputs side-by-side:
 
